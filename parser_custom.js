@@ -1,5 +1,6 @@
-// parser_custom.js
-const puppeteer = require('puppeteer');
+/// parser_custom.js
+const puppeteer = require('puppeteer-core');
+const chromium = require('chrome-aws-lambda');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -8,12 +9,10 @@ const ExcelJS = require('exceljs');
 // Настройки для Render.com
 const CHANNEL_NAME = 'Нарочно не придумаешь';
 const CHANNEL_URL = 'https://dzen.ru/id/5ae586563dceb76be76eca19?tab=articles';
-const MAX_ARTICLES = 10;
+const MAX_ARTICLES = 5; // Уменьшили для теста
 
 // Безопасное имя для папки/файла
 const safeName = CHANNEL_NAME.replace(/[<>:"/\\|?*]/g, '_');
-
-// Для Render.com используем /tmp директорию вместо Desktop
 const OUTPUT_DIR = path.join('/tmp', 'Статьи Дзен', safeName);
 
 async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
@@ -21,26 +20,21 @@ async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // Функция для создания браузера с настройками для Render
 async function createBrowser() {
   return await puppeteer.launch({
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--no-first-run',
-      '--no-zygote',
-      '--single-process',
-      '--disable-gpu'
-    ]
+    executablePath: await chromium.executablePath,
+    headless: chromium.headless,
+    args: chromium.args,
+    defaultViewport: chromium.defaultViewport,
+    ignoreHTTPSErrors: true,
   });
 }
 
 async function parseArticles() {
+  let browser;
   try {
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
     console.log('📂 Папка для вывода:', OUTPUT_DIR);
 
-    const browser = await createBrowser();
+    browser = await createBrowser();
     const page = await browser.newPage();
     
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
@@ -52,7 +46,7 @@ async function parseArticles() {
 
     // Собрать ссылки, прокликивая «Загрузить ещё»
     const linksSet = new Set();
-    for (let i = 0; i < 5 && linksSet.size < MAX_ARTICLES; i++) {
+    for (let i = 0; i < 3 && linksSet.size < MAX_ARTICLES; i++) {
       const hrefs = await page.$$eval(
         'a[data-testid="card-article-title-link"]',
         els => els.map(a => a.href)
@@ -114,8 +108,6 @@ async function parseArticles() {
       await p.close();
     }
 
-    await browser.close();
-
     // Запись в Excel
     if (results.length > 0) {
       const wb = new ExcelJS.Workbook();
@@ -152,6 +144,10 @@ async function parseArticles() {
       success: false,
       message: `Критическая ошибка: ${error.message}`
     };
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 }
 

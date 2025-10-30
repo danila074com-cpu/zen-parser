@@ -8,10 +8,11 @@
     "dev": "node parser_custom.js"
   },
   "dependencies": {
-    "puppeteer": "^21.0.0",
+    "puppeteer-core": "^21.0.0",
+    "chrome-aws-lambda": "^10.1.0",
     "exceljs": "^4.4.0"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   }
 }
