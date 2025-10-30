@@ -2,8 +2,8 @@ name: Zen Parser
 
 on:
   schedule:
-    - cron: '0 6 * * *'  # Каждый день в 06:00 UTC (09:00 МСК)
-  workflow_dispatch:       # Ручной запуск
+    - cron: '0 6 * * *'
+  workflow_dispatch:
 
 jobs:
   parse-articles:
@@ -19,23 +19,48 @@ jobs:
         node-version: '18'
         cache: 'npm'
         
+    - name: 🔍 Debug - Check files
+      run: |
+        echo "=== СОДЕРЖИМОЕ ПАПКИ ==="
+        ls -la
+        echo "=== ПРОВЕРКА PARSER.JS ==="
+        ls -la parser.js
+        echo "=== ПРОВЕРКА PACKAGE.JSON ==="
+        cat package.json
+        
     - name: 📦 Install dependencies
-      run: npm install
-      
-    - name: 🚀 Run parser
-      run: node parser.js
-      
-    - name: 💾 Upload Excel results
+      run: |
+        echo "=== УСТАНОВКА ЗАВИСИМОСТЕЙ ==="
+        npm install
+        echo "=== ПРОВЕРКА УСТАНОВЛЕННЫХ ПАКЕТОВ ==="
+        npm list
+        
+    - name: 🚀 Run parser (with debug)
+      run: |
+        echo "=== ЗАПУСК PARSER С ДИАГНОСТИКОЙ ==="
+        node -e "
+          try {
+            console.log('✅ Node.js работает');
+            console.log('✅ Puppeteer доступен:', require('puppeteer') ? 'Да' : 'Нет');
+            console.log('✅ ExcelJS доступен:', require('exceljs') ? 'Да' : 'Нет');
+          } catch (error) {
+            console.log('❌ Ошибка:', error.message);
+            process.exit(1);
+          }
+        "
+        echo "=== ЗАПУСК ОСНОВНОГО ПАРСЕРА ==="
+        node parser.js
+        
+    - name: 📂 Check results
+      run: |
+        echo "=== ПРОВЕРКА РЕЗУЛЬТАТОВ ==="
+        find . -name "*.xlsx" -o -name "*.csv" 2>/dev/null || echo "Файлы не найдены"
+        ls -la results/ 2>/dev/null || echo "Папка results не найдена"
+        
+    - name: 💾 Upload results
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: zen-articles
-        path: results/Статьи Дзен/  # ИСПРАВЛЕННЫЙ ПУТЬ
+        path: results/
         retention-days: 30
-        
-    - name: 📊 Display results
-      run: |
-        echo "✅ Парсинг завершен!"
-        echo "📁 Файлы сохранены в артефактах"
-        echo "⏰ Время: $(date)"
-        echo "📂 Проверяем созданные файлы:"
-        find results/ -name "*.xlsx" -o -name "*.csv" | head -10
