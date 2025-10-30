@@ -1,6 +1,5 @@
-/// parser_custom.js
-const puppeteer = require('puppeteer-core');
-const chromium = require('chrome-aws-lambda');
+// parser_custom.js
+const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -9,7 +8,7 @@ const ExcelJS = require('exceljs');
 // Настройки для Render.com
 const CHANNEL_NAME = 'Нарочно не придумаешь';
 const CHANNEL_URL = 'https://dzen.ru/id/5ae586563dceb76be76eca19?tab=articles';
-const MAX_ARTICLES = 5; // Уменьшили для теста
+const MAX_ARTICLES = 3; // Еще уменьшили для теста
 
 // Безопасное имя для папки/файла
 const safeName = CHANNEL_NAME.replace(/[<>:"/\\|?*]/g, '_');
@@ -20,11 +19,17 @@ async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 // Функция для создания браузера с настройками для Render
 async function createBrowser() {
   return await puppeteer.launch({
-    executablePath: await chromium.executablePath,
-    headless: chromium.headless,
-    args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
-    ignoreHTTPSErrors: true,
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--no-first-run',
+      '--no-zygote',
+      '--single-process',
+      '--disable-gpu'
+    ]
   });
 }
 
@@ -44,26 +49,13 @@ async function parseArticles() {
     await page.goto(CHANNEL_URL, { waitUntil: 'networkidle2', timeout: 60000 });
     await sleep(5000);
 
-    // Собрать ссылки, прокликивая «Загрузить ещё»
-    const linksSet = new Set();
-    for (let i = 0; i < 3 && linksSet.size < MAX_ARTICLES; i++) {
-      const hrefs = await page.$$eval(
-        'a[data-testid="card-article-title-link"]',
-        els => els.map(a => a.href)
-      );
-      hrefs.forEach(h => linksSet.add(h));
-      console.log(`🔗 Найдено ссылок: ${linksSet.size}`);
-      
-      if (linksSet.size >= MAX_ARTICLES) break;
-      
-      const more = await page.$('button[data-testid="cards-loadmore-button"]');
-      if (!more) break;
-      
-      await more.click();
-      await sleep(3000);
-    }
+    // Собрать ссылки
+    const hrefs = await page.$$eval(
+      'a[data-testid="card-article-title-link"]',
+      els => els.map(a => a.href)
+    );
     
-    const urls = Array.from(linksSet).slice(0, MAX_ARTICLES);
+    const urls = hrefs.slice(0, MAX_ARTICLES);
     console.log(`🔗 Всего ссылок для парсинга: ${urls.length}`);
 
     const results = [];
@@ -74,7 +66,6 @@ async function parseArticles() {
       
       try {
         await p.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
-        await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
         await sleep(2000);
 
         const title = await p.evaluate(() => {
