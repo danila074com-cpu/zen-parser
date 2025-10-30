@@ -2,13 +2,13 @@
   "name": "zen-parser",
   "version": "1.0.0",
   "description": "Парсер статей с Дзена",
-  "main": "parser_custom.js",
+  "main": "simple_parser.js",
   "scripts": {
-    "start": "node parser_custom.js",
-    "dev": "node parser_custom.js"
+    "start": "node simple_parser.js",
+    "dev": "node simple_parser.js"
   },
   "dependencies": {
-    "puppeteer": "^21.0.0",
+    "axios": "^1.6.0",
     "exceljs": "^4.4.0"
   },
   "engines": {
