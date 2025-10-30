@@ -1,0 +1,39 @@
+name: Zen Parser
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Каждый день в 06:00 UTC (09:00 МСК)
+  workflow_dispatch:       # Ручной запуск
+
+jobs:
+  parse-articles:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: ⎔ Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 📦 Install dependencies
+      run: npm install
+      
+    - name: 🚀 Run parser
+      run: node parser.js
+      
+    - name: 💾 Upload Excel results
+      uses: actions/upload-artifact@v4
+      with:
+        name: zen-articles
+        path: /tmp/Статьи Дзен/
+        retention-days: 30
+        
+    - name: 📊 Display results
+      run: |
+        echo "✅ Парсинг завершен!"
+        echo "📁 Файлы сохранены в артефактах"
+        echo "⏰ Время: $(date)"
