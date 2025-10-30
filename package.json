@@ -1,16 +1,8 @@
 {
   "name": "zen-parser",
   "version": "1.0.0",
-  "description": "Парсер статей с Дзена",
-  "main": "parser.js",
-  "scripts": {
-    "start": "node parser.js"
-  },
   "dependencies": {
-    "puppeteer": "^21.0.0",
+    "puppeteer": "^20.9.0",
     "exceljs": "^4.4.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
   }
 }

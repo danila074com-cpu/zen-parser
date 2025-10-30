@@ -19,43 +19,43 @@ jobs:
         node-version: '18'
         cache: 'npm'
         
-    - name: 🔍 Debug - Check files
-      run: |
-        echo "=== СОДЕРЖИМОЕ ПАПКИ ==="
-        ls -la
-        echo "=== ПРОВЕРКА PARSER.JS ==="
-        ls -la parser.js
-        echo "=== ПРОВЕРКА PACKAGE.JSON ==="
-        cat package.json
-        
     - name: 📦 Install dependencies
       run: |
+        echo "=== ОЧИСТКА КЭША И ПЕРЕУСТАНОВКА ==="
+        npm cache clean --force
+        rm -rf node_modules
+        rm -f package-lock.json
         echo "=== УСТАНОВКА ЗАВИСИМОСТЕЙ ==="
         npm install
-        echo "=== ПРОВЕРКА УСТАНОВЛЕННЫХ ПАКЕТОВ ==="
-        npm list
+        echo "=== ПРОВЕРКА УСТАНОВКИ ==="
+        npm list --depth=0
         
-    - name: 🚀 Run parser (with debug)
+    - name: 🔍 Debug - Check environment
       run: |
-        echo "=== ЗАПУСК PARSER С ДИАГНОСТИКОЙ ==="
-        node -e "
-          try {
-            console.log('✅ Node.js работает');
-            console.log('✅ Puppeteer доступен:', require('puppeteer') ? 'Да' : 'Нет');
-            console.log('✅ ExcelJS доступен:', require('exceljs') ? 'Да' : 'Нет');
-          } catch (error) {
-            console.log('❌ Ошибка:', error.message);
-            process.exit(1);
-          }
-        "
-        echo "=== ЗАПУСК ОСНОВНОГО ПАРСЕРА ==="
+        echo "=== ПРОВЕРКА СРЕДЫ ==="
+        echo "Node version: $(node --version)"
+        echo "NPM version: $(npm --version)"
+        echo "Текущая папка: $(pwd)"
+        echo "Содержимое:"
+        ls -la
+        echo "Проверка parser.js:"
+        ls -la parser.js
+        
+    - name: 🚀 Run parser
+      run: |
+        echo "=== ЗАПУСК PARSER ==="
         node parser.js
         
     - name: 📂 Check results
       run: |
         echo "=== ПРОВЕРКА РЕЗУЛЬТАТОВ ==="
-        find . -name "*.xlsx" -o -name "*.csv" 2>/dev/null || echo "Файлы не найдены"
+        find . -name "*.xlsx" -o -name "*.csv" 2>/dev/null || echo "Excel файлы не найдены"
         ls -la results/ 2>/dev/null || echo "Папка results не найдена"
+        if [ -d "results/" ]; then
+          echo "Содержимое results:"
+          ls -la results/
+          find results/ -type f -name "*.xlsx"
+        fi
         
     - name: 💾 Upload results
       if: success()
@@ -64,3 +64,17 @@ jobs:
         name: zen-articles
         path: results/
         retention-days: 30
+        
+    - name: 📊 Display success
+      if: success()
+      run: |
+        echo "✅ Парсинг успешно завершен!"
+        echo "📁 Файлы сохранены в артефактах"
+        echo "⏰ Время: $(date)"
+        
+    - name: 🐛 Display failure info
+      if: failure()
+      run: |
+        echo "❌ Парсинг завершился с ошибкой"
+        echo "🔍 Проверьте логи шага '🚀 Run parser'"
+        echo "⏰ Время: $(date)"
