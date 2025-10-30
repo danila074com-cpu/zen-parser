@@ -1,16 +1,16 @@
 {
   "name": "zen-parser",
   "version": "1.0.0",
-  "main": "server.js",
+  "description": "Парсер статей с Дзена",
+  "main": "parser.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node parser.js"
   },
   "dependencies": {
-    "express": "^4.18.0",
-    "axios": "^1.6.0",
-    "cheerio": "^1.0.0-rc.12",
-    "exceljs": "^4.4.0",
-    "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2"
+    "puppeteer": "^21.0.0",
+    "exceljs": "^4.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
