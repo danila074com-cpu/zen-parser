@@ -29,7 +29,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: zen-articles
-        path: /tmp/Статьи Дзен/
+        path: results/Статьи Дзен/  # ИСПРАВЛЕННЫЙ ПУТЬ
         retention-days: 30
         
     - name: 📊 Display results
@@ -37,3 +37,5 @@ jobs:
         echo "✅ Парсинг завершен!"
         echo "📁 Файлы сохранены в артефактах"
         echo "⏰ Время: $(date)"
+        echo "📂 Проверяем созданные файлы:"
+        find results/ -name "*.xlsx" -o -name "*.csv" | head -10

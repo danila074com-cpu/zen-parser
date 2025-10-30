@@ -9,12 +9,13 @@ const CHANNEL_URL = 'https://dzen.ru/id/5ae586563dceb76be76eca19?tab=articles';
 const MAX_ARTICLES = 10;
 
 const safeName = CHANNEL_NAME.replace(/[<>:"/\\|?*]/g, '_');
-const OUTPUT_DIR = path.join('/tmp', 'Статьи Дзен', safeName);
+// ИСПРАВЛЕННЫЙ ПУТЬ - используем process.cwd() для кроссплатформенности
+const OUTPUT_DIR = path.join(process.cwd(), 'results', 'Статьи Дзен', safeName);
 
 async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 (async () => {
-  console.log('🚀 Запуск парсера в GitHub Actions...');
+  console.log('🚀 Запуск парсера...');
   console.log('📅 Дата:', new Date().toLocaleString('ru-RU'));
   
   try {
